@@ -8,12 +8,19 @@ OUT = os.path.join(os.path.dirname(__file__), "..", "jobs.json")
 NOW = dt.datetime.now(dt.timezone.utc)
 
 def run(actor, inp):
-    for _ in range(2):
+    """Run one scraper and return its items. The run is capped (timeout + cost) so it can never hang or overspend."""
+    params = {"token": TOKEN, "clean": "true", "timeout": 200, "maxItems": 40, "maxTotalChargeUsd": 0.50}
+    for attempt in range(2):
         try:
-            r = requests.post(BASE.format(actor.replace("/", "~")), params={"token": TOKEN, "clean": "true"}, json=inp, timeout=290)
+            r = requests.post(BASE.format(actor.replace("/", "~")), params=params, json=inp, timeout=250)
             if r.ok:
                 return r.json()
             print(actor, r.status_code, r.text[:200], file=sys.stderr)
+            if r.status_code < 500:      # 4xx or 408: retrying would only start another run
+                return None
+        except requests.exceptions.Timeout:
+            print(actor, "timed out; not retrying", file=sys.stderr)
+            return None                  # do not start a second run
         except Exception as e:
             print(actor, e, file=sys.stderr)
         time.sleep(5)
