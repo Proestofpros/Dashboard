@@ -1,0 +1,77 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Job Match Dashboard</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f5f6fa;--cd:#fff;--tx:#1b2333;--mu:#667085;--bd:#e3e6ee;--ac:#2f5fd0;--hi:#c0392b;--ok:#1e8e5a}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1420;--cd:#171e2e;--tx:#e8ecf4;--mu:#93a0b8;--bd:#2a3347;--ac:#6d9bff;--hi:#ff7b6b;--ok:#4cc38a}}
+:root[data-theme="dark"]{--bg:#0f1420;--cd:#171e2e;--tx:#e8ecf4;--mu:#93a0b8;--bd:#2a3347;--ac:#6d9bff;--hi:#ff7b6b;--ok:#4cc38a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,Arial,sans-serif;padding:16px;max-width:1200px;margin:auto}
+h1{font-size:20px;margin:0}.mu{color:var(--mu);font-size:12px}
+.bn{margin:10px 0;padding:8px 12px;border-radius:8px;background:var(--cd);border:1px solid var(--bd);font-size:13px}.bn.w{border-color:var(--hi);color:var(--hi)}
+.g{display:grid;gap:10px}.k{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.c3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.cd{background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:12px}
+.kv{font-size:24px;font-weight:700}.cd h3{margin:0 0 8px;font-size:13px;color:var(--mu);font-weight:600}
+.br{display:flex;align-items:center;gap:6px;margin:4px 0;font-size:12px}.br b{width:92px;font-weight:400;flex:none}.br i{display:block;height:12px;background:var(--ac);border-radius:3px;min-width:2px}.br span{color:var(--mu)}
+.f{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+input,select,button{font:inherit;color:var(--tx);background:var(--cd);border:1px solid var(--bd);border-radius:6px;padding:5px 8px}
+button.on{background:var(--ac);color:#fff;border-color:var(--ac)}button{cursor:pointer}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;background:var(--cd);border:1px solid var(--bd);border-radius:10px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mu);cursor:pointer;white-space:nowrap}
+td.n{white-space:nowrap}.hc{background:var(--hi);color:#fff;font-size:10px;padding:1px 6px;border-radius:9px;margin-left:6px}
+.mb{display:inline-block;width:60px;height:8px;background:var(--bd);border-radius:4px;vertical-align:middle;margin-right:6px}.mb i{display:block;height:100%;background:var(--ok);border-radius:4px}
+a.ap{color:var(--ac);text-decoration:none;font-weight:600}tr.dn{opacity:.5}
+</style></head><body>
+<h1>Job Match Dashboard</h1><div class="mu">Entry-level · India · LinkedIn + Naukri + Foundit · analytics, QA and civil roles</div>
+<div id="bn" class="bn"><span id="bt"></span> <div id="rs" class="mu"></div></div><div id="kp" class="g k"></div>
+<div class="g c3" style="margin-top:10px"><div class="cd"><h3>Jobs by source</h3><div id="c1"></div></div><div class="cd"><h3>Jobs by role type</h3><div id="c2"></div></div><div class="cd"><h3>Match score spread</h3><div id="c3"></div></div></div>
+<div class="f"><input id="q" placeholder="Search title or company"><span id="sc"></span><select id="ap"></select><select id="ct"></select><select id="lc"></select>
+<label class="mu">Min match <input id="mn" type="range" min="75" max="90" value="75"> <b id="mv">75%</b></label><label class="mu"><input id="ha" type="checkbox"> Hide applied/rejected</label></div>
+<div class="tw"><table><thead><tr id="th"></tr></thead><tbody id="tb"></tbody></table></div>
+<p class="mu">Match scores are estimates from titles and listing details, not full job descriptions. Status is saved in this browser only.</p>
+<script type="module">
+const J=await (await fetch("jobs.json?t="+Date.now())).json(),AS=J.updated,P={L:"https://in.linkedin.com/jobs/view/",N:"https://www.naukri.com/job-listings-",I:"https://in.indeed.com/viewjob?jk=",F:"https://www.foundit.in/job/"},SN={L:"LinkedIn",N:"Naukri",I:"Indeed",F:"Foundit"};
+// [title,company,location,score,applyType,salary,src,slug,postedDay]
+const D=J.rows;
+const cat=t=>/civil|site engineer|road|highway|structural|junior engineer|construction|graduate engineer trainee|infra/i.test(t)?"Civil Engineering":/qa|test|quality/i.test(t)?"QA / Testing":/research|financ|risk|compliance|deals/i.test(t)?"Finance / Research":/business analyst|consult|business data/i.test(t)?"Business Analysis":"Data Analytics";
+const AL={"Hyd":"Hyderabad","Blr":"Bengaluru","Gurgaon":"Gurugram","NCR":"Delhi NCR","Vadodara area":"Vadodara"},NS="Location not specified";
+const LOC=l=>{const o=new Set();l.split("/").map(x=>x.trim()).forEach(x=>{x=AL[x]||x;if(/^(India|See listing)$/i.test(x))x=NS;o.add(x);if(["Gurugram","Noida","Delhi NCR"].includes(x))o.add("Delhi NCR")});return[...o]};
+let R=D.map((r,i)=>({k:i+1,t:r[0],c:r[1],l:r[2],s:r[3],a:r[4],m:r[5],o:r[6],u:P[r[6]]+r[7],d:Date.parse(r[8]+", 2026")||0,dl:r[8],g:cat(r[0]),lc:LOC(r[2])}));
+const $=s=>document.getElementById(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let st={};try{st=JSON.parse(localStorage.getItem("jd")||"{}")}catch(e){}
+const sv=()=>{try{localStorage.setItem("jd",JSON.stringify(st))}catch(e){}};
+const F={q:"",src:new Set(["L","N","I","F"]),ap:"All",ct:"All",lc:"All",mn:75,ha:false,sk:"k",dir:1};
+const ST=["Not applied","Applied","Interview","Rejected","Offer"];
+let curTs=Date.parse(AS);
+function setBanner(ts,live){curTs=ts;const hh=(Date.now()-ts)/36e5,b=$("bn");$("bt").textContent="Data from "+new Date(ts).toLocaleString()+" ("+(hh<1?"under 1h":Math.round(hh)+"h")+" ago) · "+(live?"auto-updated daily":"saved snapshot")+". "+(hh>24?"Over a day old.":"");b.className=hh>24?"bn w":"bn"}
+setBanner(curTs,false);
+$("sc").innerHTML=["L","N","I","F"].map(x=>`<button data-s="${x}" class="on">${SN[x]}</button>`).join(" ");
+$("ap").innerHTML=["All","Easy Apply","External","Company site","Naukri Apply","Foundit"].map(x=>`<option>${x==="All"?"All apply types":x}</option>`).join("");
+const cats=["All",...new Set(R.map(r=>r.g))];$("ct").innerHTML=cats.map(x=>`<option value="${x}">${x==="All"?"All role types":x}</option>`).join("");
+function buildLc(){const lcn={};R.forEach(r=>r.lc.forEach(x=>lcn[x]=(lcn[x]||0)+1));
+$("lc").innerHTML='<option value="All">All locations</option>'+Object.entries(lcn).sort((a,b)=>(a[0]===NS)-(b[0]===NS)||b[1]-a[1]||a[0].localeCompare(b[0])).map(([k,v])=>`<option value="${esc(k)}">${esc(k)} (${v})</option>`).join("");}
+buildLc();
+const cols=[["k","#"],["t","Role"],["l","Location"],["s","Match"],["m","Salary"],["o","Source"],["d","Posted"],["","Apply"],["","Status"]];
+$("th").innerHTML=cols.map(c=>`<th data-k="${c[0]}">${c[1]}</th>`).join("");
+function bars(el,e,mx){$(el).innerHTML=e.map(([n,v])=>`<div class="br"><b>${esc(n)}</b><i style="width:${Math.max(2,v/mx*100*0.5)}%"></i><span>${v}</span></div>`).join("")}
+function draw(){
+ const L=R.filter(r=>F.src.has(r.o)&&(F.ap==="All"||r.a===F.ap)&&(F.ct==="All"||r.g===F.ct)&&(F.lc==="All"||r.lc.includes(F.lc))&&r.s>=F.mn&&(!F.q||(r.t+" "+r.c).toLowerCase().includes(F.q))&&!(F.ha&&["Applied","Rejected"].includes(st[r.u])));
+ L.sort((a,b)=>(a[F.sk]>b[F.sk]?1:a[F.sk]<b[F.sk]?-1:0)*F.dir);
+ const n=L.length,avg=n?L.reduce((s,r)=>s+r.s,0)/n:0;
+ const kp=[["Jobs shown",n],["Avg match",avg.toFixed(1)+"%"],["High chance",L.filter(r=>r.k<=5).length],["Salary listed",L.filter(r=>r.m).length],["Easy Apply",L.filter(r=>r.a==="Easy Apply").length],["Applied",R.filter(r=>["Applied","Interview","Offer"].includes(st[r.u])).length]];
+ $("kp").innerHTML=kp.map(k=>`<div class="cd"><div class="mu">${k[0]}</div><div class="kv">${k[1]}</div></div>`).join("");
+ const cnt=(f)=>{const m={};L.forEach(r=>{const x=f(r);m[x]=(m[x]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1])};
+ bars("c1",cnt(r=>SN[r.o]),n||1);bars("c2",cnt(r=>r.g),n||1);
+ bars("c3",[["75–79%",L.filter(r=>r.s<80).length],["80–84%",L.filter(r=>r.s>=80&&r.s<85).length],["85%+",L.filter(r=>r.s>=85).length]],n||1);
+ $("tb").innerHTML=L.map(r=>{const s=st[r.u]||"Not applied";return`<tr class="${["Applied","Rejected"].includes(s)?"dn":""}"><td class="n">${r.k}</td><td><b>${esc(r.t)}</b>${r.k<=5?'<span class="hc">HIGH CHANCE</span>':""}<br><span class="mu">${esc(r.c)}</span></td><td>${esc(r.l)}</td><td class="n"><span class="mb"><i style="width:${r.s}%"></i></span>${r.s}%</td><td class="n">${esc(r.m||"—")}</td><td>${SN[r.o]}</td><td class="n">${r.dl}</td><td class="n"><a class="ap" href="${esc(r.u)}" target="_blank" rel="noopener">${r.a} ↗</a></td><td><select data-u="${esc(r.u)}">${ST.map(x=>`<option${x===s?" selected":""}>${x}</option>`).join("")}</select></td></tr>`}).join("")||'<tr><td colspan="9" class="mu">No jobs match these filters.</td></tr>';
+}
+$("q").oninput=e=>{F.q=e.target.value.toLowerCase();draw()};
+$("ap").onchange=e=>{F.ap=e.target.value.replace("All apply types","All");draw()};
+$("ct").onchange=e=>{F.ct=e.target.value;draw()};
+$("lc").onchange=e=>{F.lc=e.target.value;draw()};
+$("mn").oninput=e=>{F.mn=+e.target.value;$("mv").textContent=F.mn+"%";draw()};
+$("ha").onchange=e=>{F.ha=e.target.checked;draw()};
+$("sc").onclick=e=>{const x=e.target.dataset.s;if(!x)return;F.src.has(x)?F.src.delete(x):F.src.add(x);e.target.classList.toggle("on");draw()};
+$("th").onclick=e=>{const k=e.target.dataset.k;if(!k)return;F.dir=F.sk===k?-F.dir:(k==="s"?-1:1);F.sk=k;draw()};
+$("tb").onchange=e=>{const u=e.target.dataset.u;if(!u)return;st[u]=e.target.value;sv();draw()};
+draw();
+
+</script></body></html>
